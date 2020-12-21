@@ -1,56 +1,29 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use chrono::Local;
+use reqwest::{
+    Error
+};
+
+mod api_handler;
+use api_handler::*;
+
+// constants
 
 static CONNECTION_ERROR: &str = "connection error";
-static PATH: &str = "/home/joscha/.config/polybar/scripts/syncthing_status/";
-
-#[derive(Serialize, Eq, PartialEq)]
-struct DeviceConfig {
-    url: String,
-    name: String,
-    api_key: String
-}
-
-// folder deserialization
-#[derive(Serialize, Deserialize)]
-struct Config {
-    folders: Vec<FolderName>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct FolderName {
-    id: String,
-    label: String,
-}
-
-#[derive(Serialize, Deserialize)]
-struct FolderInfo {
-    state: String,
-    errors: u32,
-}
-
-#[derive(Serialize, Deserialize)]
-struct Folder {
-    id: String,
-    label: String,
-    state: String,
-    errors: u32,
-}
+static PATH: &str = "/home/joscha/.config/syncthing_status/";
 
 fn main() -> std::io::Result<()> {
 
     //define devices
     #[allow(non_snake_case)]
-    let devices: [DeviceConfig; 2] = [
-        DeviceConfig {
+    let devices: [Device; 2] = [
+        Device {
             url: String::from("http://127.0.0.1:8080"),
             name: String::from("laptop"),
             api_key: String::from("FLR6DH9pyGvMuweZics9LDL9Auwb3JRG"),
         },
-        DeviceConfig {
+        Device {
             url: String::from("http://192.168.0.10:8384"),
             name: String::from("rasp"),
             api_key: String::from("2feNdfnPzCYRwCcy2cVXKVVA2VH9dubZ"),
@@ -58,129 +31,66 @@ fn main() -> std::io::Result<()> {
     ];
 
     // the output string
-    let mut file_string = String::new();
+    let mut file_output = String::new();
     let mut bar_output = String::new();
 
     //iterate over devices
     for device in devices.iter() {
 
-        let device_connected: bool;
-        let long_string: String;
-        let short_string: String;
-
         let is_last_item: bool = device == &devices[devices.len() -1];
 
-        // fetch folders name/id
-        let folders_name: HashMap<String, String> = match get_folder(&device) {
-            Some(map) => {
-                device_connected = true;
-                map
-            }
-            None => {
-                device_connected = false;
-                HashMap::new()
-            },
-        };
+        let folders = device.get_folders();
+        let (file_string, bar_string) = format_output(&folders, &device.name, is_last_item);
 
-        if device_connected {
-            let mut folders: Vec<Folder> = Vec::new();
-
-            for (id, label) in folders_name.into_iter() {
-
-                // fetch folder information like state
-                let f_info = match get_folder_info(id.clone(), &device) {
-                    Some(data) => data,
-                    None => continue,
-                };
-
-                // create Folder with all information combined
-                let f = Folder {
-                    id,
-                    label,
-                    state: f_info.state,
-                    errors: f_info.errors,
-                };
-
-                folders.push(f);
-            }
-
-            //combine to one string
-            let (formatted, short) = append_to_output_string(&folders, &device.name, is_last_item);
-
-            long_string = formatted;
-            short_string = format!("{}: {} - ", &device.name, short);
-
-        } else {
-            long_string = String::new();
-            short_string = format!("{}: {} - ", &device.name, CONNECTION_ERROR.to_string());
-        }
-
-        file_string = file_string + &long_string;
-        bar_output = bar_output + &short_string;
+        file_output += &file_string;
+        bar_output += &bar_string;
     }
-
-    bar_output.truncate(bar_output.len() - 3);
 
     //write string and return `Result<>`
     println!("{}", bar_output);
-    write_to_file(&file_string)
+    write_to_file(&file_output)
 }
 
-fn get_folder(device: &DeviceConfig) -> Option<HashMap<String, String>> {
+fn format_output(folders: &Result<Vec<Folder>, Error>, device_name: &String, is_last: bool) -> (String, String) {
 
-    let mut folders: HashMap<String, String> = HashMap::new();
+    let name = device_name;
+    let mut status = String::from("Up to date");
+    let mut file_string: String;
 
-    let client = reqwest::blocking::Client::builder().build().ok()?;
-    let body = client.get(&format!("{}{}", &device.url, "/rest/system/config"))
-        .header("X-API-Key", &device.api_key)
-        .send().ok()?
-        .text().ok()?;
+    match folders {
+        Ok(folders) => {
+            file_string = format!("-------------------- {:-<25} \n", &name);
 
-    let data: Config = serde_json::from_str(&body).unwrap();
+            for f in folders.iter() {
+                file_string = format!("{}{:>13}: {:<10} | Errors: {} \n",
+                                 file_string,
+                                 f.label,
+                                 f.state,
+                                 f.errors
+                                );
 
-    for f in data.folders.iter() {
-        folders.insert(f.id.clone(), f.label.clone());
-    }
-
-    Some(folders)
-}
-
-fn get_folder_info(id: String, device: &DeviceConfig) -> Option<FolderInfo> {
-
-    let client = reqwest::blocking::Client::builder().build().ok()?;
-    let body = client.get(&format!("{}{}{}", &device.url, "/rest/db/status?folder=", &id))
-        .header("X-API-Key", &device.api_key)
-        .send().ok()?
-        .text().ok()?;
-
-    let data: FolderInfo = serde_json::from_str(&body).unwrap();
-
-    Some(data)
-}
-
-fn append_to_output_string(folders: &Vec<Folder>, device_name: &String, is_last: bool) -> (String, String) {
-
-    let mut string = format!("-------------------- {:-<25}\n", device_name.clone() + " ");
-
-    let mut short_output = String::from("Up to Date");
-
-    for f in folders.iter() {
-        string = format!("{}{:>13}: {:<10} | Errors: {} \n",
-            string,
-            f.label,
-            f.state,
-            f.errors
-        );
-
-        if &f.state != "idle" {
-            short_output = f.state.clone();
+                if &f.state != "idle" {
+                    status = f.state.clone() // only keep last not-idle status
+                }
+            }
+        },
+        Err(error) => {
+            eprintln!("Error while requsting folders: {}", error);
+            file_string = String::new();
+            status = CONNECTION_ERROR.to_string();
         }
     }
 
     if is_last {
-        (string, short_output)
+        (
+            file_string,
+            format!("{}: {}", device_name, status)
+        )
     } else {
-        (string + "\n", short_output)
+        (
+            file_string + "\n",
+            format!("{}: {} - ", device_name, status)
+        )
     }
 }
 
