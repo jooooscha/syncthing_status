@@ -173,16 +173,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "get_status"
-version = "0.1.4"
-dependencies = [
- "chrono",
- "reqwest",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -800,6 +790,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
+]
+
+[[package]]
+name = "syncthing_status"
+version = "0.2.0"
+dependencies = [
+ "chrono",
+ "reqwest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

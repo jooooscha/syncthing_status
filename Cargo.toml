@@ -1,6 +1,6 @@
 [package]
-name = "get_status"
-version = "0.1.4"
+name = "syncthing_status"
+version = "0.2.0"
 authors = ["joooscha <joscha.loos@pm.me>"]
 edition = "2018"
 
