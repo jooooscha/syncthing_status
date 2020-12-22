@@ -75,7 +75,7 @@ fn format_output(folders: &Result<Vec<Folder>, Error>, device_name: &String, is_
             }
         },
         Err(error) => {
-            eprintln!("Error while requsting folders: {}", error);
+            /* eprintln!("Error while requsting folders: {}", error); */
             file_string = String::new();
             status = CONNECTION_ERROR.to_string();
         }
