@@ -1,6 +1,6 @@
 [package]
 name = "syncthing_status"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["joooscha <joscha.loos@pm.me>"]
 edition = "2018"
 
@@ -11,3 +11,5 @@ reqwest = { version = "0.10.*", features = ["blocking"] }
 serde_json = "1.0.48"
 serde = { version = "1.0.104", features = ["derive"] }
 chrono = "0.4.15"
+serde_yaml = "*"
+dirs = "*"
