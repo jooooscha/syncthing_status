@@ -5,7 +5,7 @@ use reqwest::{
 };
 use std::collections::HashMap;
 
-#[derive(Serialize, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
 pub struct Device {
     pub url: String,
     pub name: String,
