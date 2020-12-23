@@ -9,10 +9,10 @@ pub fn format_output(folders: &Result<Vec<Folder>, Error>, device_name: &String,
     let mut status = String::from("Up to date");
     let mut file_string: String;
 
+    file_string = format!("-------------------- {:-<25} \n", &name);
+
     match folders {
         Ok(folders) => {
-            file_string = format!("-------------------- {:-<25} \n", &name);
-
             for f in folders.iter() {
                 file_string = format!("{}{:>13}: {:<10} | Errors: {} \n",
                                  file_string,
@@ -27,8 +27,7 @@ pub fn format_output(folders: &Result<Vec<Folder>, Error>, device_name: &String,
             }
         },
         Err(_) => {
-            /* eprintln!("Error while requsting folders: {}", error); */
-            file_string = String::new();
+            file_string += &CONNECTION_ERROR.to_string();
             status = CONNECTION_ERROR.to_string();
         }
     }
