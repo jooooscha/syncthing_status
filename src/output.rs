@@ -16,7 +16,7 @@ pub fn format_output(folders: &Result<Vec<Folder>, Error>, device_name: &String,
             for f in folders.iter() {
                 file_string = format!("{}{:>13}: {:<10} | Errors: {} \n", file_string, f.label, f.state, f.errors);
 
-                if &f.state != "idle" {
+                if &f.state != "idle" && &f.state != "" { // emtpy string is when folder is paused
                     status = f.state.clone() // only keep last not-idle status
                 }
             }
