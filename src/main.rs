@@ -1,6 +1,6 @@
+use chrono::Local;
 use std::fs::File;
 use std::io::prelude::*;
-use chrono::Local;
 
 mod api_handler;
 
@@ -14,7 +14,6 @@ use output::format_output;
 // constants
 
 fn main() -> std::io::Result<()> {
-
     let devices = get_devices();
 
     // the output string
@@ -23,8 +22,7 @@ fn main() -> std::io::Result<()> {
 
     //iterate over devices
     for device in devices.iter() {
-
-        let is_last_item: bool = device == &devices[devices.len() -1];
+        let is_last_item: bool = device == &devices[devices.len() - 1];
 
         let folders = device.get_folders();
         let (file_string, bar_string) = format_output(&folders, &device.name, is_last_item);
@@ -39,7 +37,6 @@ fn main() -> std::io::Result<()> {
 }
 
 fn write_to_file(string: &String) -> std::io::Result<()> {
-
     // write output content
     let mut file = File::create(PATH.to_owned() + "output")?;
     file.write_all(&string.as_bytes())?;
