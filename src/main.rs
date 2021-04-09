@@ -25,7 +25,7 @@ fn main() -> std::io::Result<()> {
         let is_last_item: bool = device == &devices[devices.len() - 1];
 
         let folders = device.get_folders();
-        let (file_string, bar_string) = format_output(&folders, &device.name, is_last_item);
+        let (file_string, bar_string) = format_output(&folders, &device.name, &device.long_name, is_last_item);
 
         file_output += &file_string;
         bar_output += &bar_string;

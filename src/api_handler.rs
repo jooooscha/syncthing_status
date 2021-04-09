@@ -6,6 +6,7 @@ use std::collections::HashMap;
 pub struct Device {
     pub url: String,
     pub name: String,
+    pub long_name: String,
     pub api_key: String,
 }
 

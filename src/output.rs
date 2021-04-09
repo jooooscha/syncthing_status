@@ -4,15 +4,17 @@ use crate::api_handler::*;
 use reqwest::Error;
 
 pub fn format_output(
-    folders: &Result<Vec<Folder>, Error>,
-    device_name: &String,
-    is_last: bool,
-) -> (String, String) {
-    let name = device_name;
+        folders: &Result<Vec<Folder>, Error>,
+        name: &String,
+        long_name: &String,
+        is_last: bool,
+    ) -> (String, String) {
+
     let mut status = String::from("Ok");
     let mut file_string: String;
 
-    file_string = format!("-------------------- {:-<25} \n", &name);
+    let ln = format!("{} ", &long_name);
+    file_string = format!("-------------------- {:-<25}\n", ln);
 
     match folders {
         Ok(folders) => {
@@ -35,11 +37,8 @@ pub fn format_output(
     }
 
     if is_last {
-        (file_string, format!("{}: {}", device_name, status))
+        (file_string, format!("{}: {}", name, status))
     } else {
-        (
-            file_string + "\n",
-            format!("{}: {} - ", device_name, status),
-        )
+        (file_string + "\n", format!("{}: {} - ", name, status))
     }
 }
