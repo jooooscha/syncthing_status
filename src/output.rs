@@ -9,7 +9,7 @@ pub fn format_output(
     is_last: bool,
 ) -> (String, String) {
     let name = device_name;
-    let mut status = String::from("Up to date");
+    let mut status = String::from("Ok");
     let mut file_string: String;
 
     file_string = format!("-------------------- {:-<25} \n", &name);
