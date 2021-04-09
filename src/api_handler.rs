@@ -86,7 +86,9 @@ fn request_folder_info(
 }
 
 fn make_request(url: &String, api_key: &String) -> Result<String, Error> {
-    let client = Client::builder().build()?;
+    let client = Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()?;
 
     let response = client
         .get(url)
