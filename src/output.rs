@@ -1,10 +1,9 @@
 static CONNECTION_ERROR: &str = "No con.";
 
 use crate::api_handler::*;
-use reqwest::Error;
 
 pub fn format_output(
-        folders: &Result<Vec<Folder>, Error>,
+        folders: &Result<Vec<Folder>, Box<dyn std::error::Error>>,
         name: &String,
         long_name: &String,
         is_last: bool,

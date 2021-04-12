@@ -37,7 +37,7 @@ pub struct Folder {
 
 impl Device {
     // returns all folders from 'Device' as a Vec<Folder>
-    pub fn get_folders(&self) -> Result<Vec<Folder>, Error> {
+    pub fn get_folders(&self) -> Result<Vec<Folder>, Box<dyn std::error::Error>> {
         let folders__ = request_folder(&self.url, &self.api_key)?;
 
         let mut folder_complete: Vec<Folder> = Vec::new();
@@ -59,11 +59,11 @@ impl Device {
     }
 }
 // Request all folders of a device
-fn request_folder(device_url: &String, api_key: &String) -> Result<HashMap<String, String>, Error> {
+fn request_folder(device_url: &String, api_key: &String) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
     let url = format!("{}{}", device_url, "/rest/system/config");
     let body = make_request(&url, api_key)?;
 
-    let device_response: DeviceResponse = serde_json::from_str(&body).unwrap();
+    let device_response: DeviceResponse = serde_json::from_str(&body)?;
     let mut folders: HashMap<String, String> = HashMap::new();
 
     for folder in device_response.folders.into_iter() {
