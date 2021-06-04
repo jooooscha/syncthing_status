@@ -1,4 +1,4 @@
-static CONNECTION_ERROR: &str = "No con.";
+static CONNECTION_ERROR: &str = "👎";
 
 use crate::api_handler::*;
 
@@ -9,7 +9,8 @@ pub fn format_output(
         is_last: bool,
     ) -> (String, String) {
 
-    let mut status = String::from("Ok");
+    // let mut status = String::from("Ok");
+    let mut status = String::from("👍");
     let mut file_string: String;
 
     let ln = format!("{} ", &long_name);
