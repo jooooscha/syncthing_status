@@ -1,4 +1,9 @@
 static CONNECTION_ERROR: &str = "👎";
+static CONNECTION_GOOD: &str = "👍";
+static SCANNING: &str = "📀";
+static SYNCING: &str = "💾";
+// static PREPARING: &str = "💿";
+static PREPARING: &str = SYNCING;
 
 use crate::api_handler::*;
 
@@ -10,7 +15,7 @@ pub fn format_output(
     ) -> (String, String) {
 
     // let mut status = String::from("Ok");
-    let mut status = String::from("👍");
+    let mut status = CONNECTION_GOOD.to_string();
     let mut file_string: String;
 
     let ln = format!("{} ", &long_name);
@@ -26,7 +31,13 @@ pub fn format_output(
 
                 if &f.state != "idle" && &f.state != "" {
                     // emtpy string is when folder is paused
-                    status = f.state.clone() // only keep last not-idle status
+                    status = match f.state.clone().as_str() {
+                        "scanning" => SCANNING.to_string(),
+                        "sync-preparing" => PREPARING.to_string(),
+                        "syncing" => SYNCING.to_string(),
+                        _ => f.state.clone(),
+                    };
+                    /* status = f.state.clone() // only keep last not-idle status */
                 }
             }
         }
