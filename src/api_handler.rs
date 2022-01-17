@@ -34,7 +34,7 @@ impl Folder {
         let mut ret = Vec::new();
         for id in folders.into_iter() {
             let url = format!("{}{}{}", config.url, "/rest/db/status?folder=", id.id);
-            let body = request(&url, &config.api_key);
+            let folder_info: FolderState = serde_json::from_str(&body).unwrap();
             let state: FolderState = serde_json::from_str(&body).unwrap();
             let folder = Self { id, state };
             ret.push(folder);

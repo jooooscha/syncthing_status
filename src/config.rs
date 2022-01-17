@@ -18,13 +18,26 @@ const CONFIG_FILE: &str = "devices.yml";
 
 #[derive(Serialize, Deserialize, Eq, PartialEq)]
 pub(crate) struct Config {
+    devices: Vec<Device>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            devices: vec![Device::default()],
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq)]
+pub(crate) struct Device {
     pub url: String,
     pub name: String,
     pub short_name: String,
     pub api_key: String,
 }
 
-impl Default for Config {
+impl Default for Device {
     fn default() -> Self {
         let url = "https://localhost:8384".to_string();
         let name = "Laptop".to_string();
@@ -41,7 +54,7 @@ impl Default for Config {
 }
 
 impl Config {
-    pub(crate) fn load() -> Vec<Self> {
+    pub(crate) fn load() -> Self {
         get_devices()
     }
 }
@@ -90,7 +103,7 @@ impl Config {
  * } */
 
 /// Read in config dir
-pub(crate) fn get_devices() -> Vec<Config> {
+pub(crate) fn get_devices() -> Config {
 
     let file_path = get_config_dir().join(CONFIG_FILE);
 
@@ -111,10 +124,10 @@ pub(crate) fn get_devices() -> Vec<Config> {
         Err(error) => {
             match error.kind() {
                 ErrorKind::NotFound => {
-                    let vec = vec![Config::default()];
-                    let string = serde_yaml::to_string(&vec).unwrap();
+                    let devices = vec![Config::default()];
+                    let string = serde_yaml::to_string(&devices).unwrap();
                     write_config(&string);
-                    return vec
+                    return Config { devices };
                 },
                 other_error => {
                     panic!("Could not read file: {:?}", other_error);
