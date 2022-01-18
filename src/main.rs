@@ -41,20 +41,5 @@ fn main() {
         bar_output += &bar_string;
     }
 
-    //write string and return `Result<>`
     println!("{}", bar_output);
-    /* write_to_file(&file_output) */
 }
-
-/* fn write_to_file(string: &String) -> std::io::Result<()> {
- *     // write output content
- *     let mut file = File::create(PATH.to_owned() + "output")?;
- *     file.write_all(&string.as_bytes())?;
- *
- *     //write date file
- *     let date = Local::now().format("Last Check: %A - %T");
- *     let mut file = File::create(PATH.to_owned() + "time")?;
- *     file.write_all(&date.to_string().as_bytes())?;
- *
- *     Ok(())
- * } */

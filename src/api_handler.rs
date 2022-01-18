@@ -1,75 +1,135 @@
-use reqwest::{blocking::Client};
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::error::Error;
-use std::collections::HashMap;
-use crate::config::Config;
+use crate::config::Device;
 
-const CONFIG_PATH: &str = "/rest/system/config";
-const FOLDER_PATH: &str = "/rest/db/status?folder=";
+const SYSTEM_CONFIG: &str = "/rest/system/config";
+const DB_STATUS: &str = "/rest/db/status?folder=";
+
+type FolderId = String;
+type FolderLabel = String;
+type State = String;
 
 #[derive(Serialize, Deserialize)]
-struct(crate) FolderId {
-    id: String,
-    label: String,
+struct SystemConfig {
+    folders: Vec<Folder>
 }
 
 #[derive(Serialize, Deserialize)]
-struct(crate) FolderState {
-    state: String,
-    errors: u32,
-}
-
-#[derive(Serialize, Deserialize)]
-pub(crate) struct Folder {
+struct Folder {
     id: FolderId,
-    state: FolderState,
+    label: FolderLabel,
+    paused: bool,
 }
 
-impl Folder {
-    pub(crate) fn load(config: &Config) -> Vec<Self> {
-        let url = format!("{}{}", config.url, CONFIG_PATH);
-        let body = request(&url, &config.api_key);
-        let folders: Vec<FolderId> = serde_json::from_str::<Vec<FolderId>>(&body).unwrap();
+#[derive(Serialize, Deserialize)]
+struct DbStatus {
+    state: State,
+}
 
-        let mut ret = Vec::new();
-        for id in folders.into_iter() {
-            let url = format!("{}{}{}", config.url, "/rest/db/status?folder=", id.id);
-            let folder_info: FolderState = serde_json::from_str(&body).unwrap();
-            let state: FolderState = serde_json::from_str(&body).unwrap();
-            let folder = Self { id, state };
-            ret.push(folder);
+
+pub(crate) struct Rest {
+    client: Client,
+    device: Device,
+}
+
+impl Rest {
+    pub(crate) fn new(device: Device) -> Self {
+        let client = Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build().unwrap();
+
+        Self {
+            client,
+            device,
         }
-
-        ret
+    }
+    pub(crate) fn system_config(&self) -> SystemConfig {
+        let body = self.request(SYSTEM_CONFIG);
+        serde_json::from_str(&body).unwrap()
     }
 
-    pub(crate) fn id(&self) -> String {
-        self.id.id
+    pub(crate) fn db_status(&self, id: FolderId) -> DbStatus {
+        let url = format!("{}{}", DB_STATUS, id);
+        let body = self.request(&url);
+        serde_json::from_str(&body).unwrap()
     }
-    pub(crate) fn label(&self) -> String {
-        self.id.label
-    }
-    pub(crate) fn state(&self) -> String {
-        self.state.state
-    }
-    pub(crate) fn errors(&self) -> u32 {
-        self.state.errors
+
+    fn request(&self, url: &str) -> String {
+        let response = self.client
+            .get(url)
+            .header("X-API-Key", self.device.api_key)
+            .send().unwrap()
+            .text().unwrap();
+
+        response
     }
 }
 
-fn request(url: &String, api_key: &String) -> String {
-    let client = Client::builder()
-        .danger_accept_invalid_certs(true)
-        .build().unwrap();
+//////////////////////
 
-    let response = client
-        .get(url)
-        .header("X-API-Key", api_key)
-        .send().unwrap()
-        .text().unwrap();
-
-    response
-}
+/* #[derive(Serialize, Deserialize)]
+ * struct(crate) FolderId {
+ *     id: String,
+ *     label: String,
+ * }
+ *
+ * #[derive(Serialize, Deserialize)]
+ * struct(crate) FolderState {
+ *     state: String,
+ *     errors: u32,
+ * }
+ *
+ * #[derive(Serialize, Deserialize)]
+ * pub(crate) struct Folder {
+ *     id: FolderId,
+ *     state: FolderState,
+ * }
+ *
+ * impl Folder {
+ *     pub(crate) fn load(config: &Config) -> Vec<Self> {
+ *         let url = format!("{}{}", config.url, CONFIG_PATH);
+ *         let body = request(&url, &config.api_key);
+ *         let folders: Vec<FolderId> = serde_json::from_str::<Vec<FolderId>>(&body).unwrap();
+ *
+ *         let mut ret = Vec::new();
+ *         for id in folders.into_iter() {
+ *             let url = format!("{}{}{}", config.url, "/rest/db/status?folder=", id.id);
+ *             let folder_info: FolderState = serde_json::from_str(&body).unwrap();
+ *             let state: FolderState = serde_json::from_str(&body).unwrap();
+ *             let folder = Self { id, state };
+ *             ret.push(folder);
+ *         }
+ *
+ *         ret
+ *     }
+ *
+ *     pub(crate) fn id(&self) -> String {
+ *         self.id.id
+ *     }
+ *     pub(crate) fn label(&self) -> String {
+ *         self.id.label
+ *     }
+ *     pub(crate) fn state(&self) -> String {
+ *         self.state.state
+ *     }
+ *     pub(crate) fn errors(&self) -> u32 {
+ *         self.state.errors
+ *     }
+ * }
+ *
+ * fn request(url: &String, api_key: &String) -> String {
+ *     let client = Client::builder()
+ *         .danger_accept_invalid_certs(true)
+ *         .build().unwrap();
+ *
+ *     let response = client
+ *         .get(url)
+ *         .header("X-API-Key", api_key)
+ *         .send().unwrap()
+ *         .text().unwrap();
+ *
+ *     response
+ * } */
 
 /* #[derive(Serialize, Deserialize)]
  * pub(crate) struct DirList {
