@@ -1,46 +1,46 @@
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use crate::config::Device;
+use crate::config::Config;
 
 const SYSTEM_CONFIG: &str = "/rest/system/config";
 const DB_STATUS: &str = "/rest/db/status?folder=";
 
-type FolderId = String;
-type FolderLabel = String;
-type State = String;
+pub(crate) type FolderId = String;
+pub(crate) type FolderLabel = String;
+pub(crate) type State = String;
 
-#[derive(Serialize, Deserialize)]
-struct SystemConfig {
-    folders: Vec<Folder>
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct SystemConfig {
+    pub(crate) folders: Vec<Folder>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct Folder {
+    pub(crate) id: FolderId,
+    pub(crate) label: FolderLabel,
+    pub(crate) paused: bool,
 }
 
 #[derive(Serialize, Deserialize)]
-struct Folder {
-    id: FolderId,
-    label: FolderLabel,
-    paused: bool,
-}
-
-#[derive(Serialize, Deserialize)]
-struct DbStatus {
-    state: State,
+pub(crate) struct DbStatus {
+    pub(crate) state: State,
 }
 
 
 pub(crate) struct Rest {
-    client: Client,
-    device: Device,
+    pub(crate) client: Client,
+    pub(crate) config: Config,
 }
 
 impl Rest {
-    pub(crate) fn new(device: Device) -> Self {
+    pub(crate) fn new(config: Config) -> Self {
         let client = Client::builder()
             .danger_accept_invalid_certs(true)
             .build().unwrap();
 
         Self {
             client,
-            device,
+            config,
         }
     }
     pub(crate) fn system_config(&self) -> SystemConfig {
@@ -48,16 +48,17 @@ impl Rest {
         serde_json::from_str(&body).unwrap()
     }
 
-    pub(crate) fn db_status(&self, id: FolderId) -> DbStatus {
+    pub(crate) fn db_status(&self, id: &FolderId) -> DbStatus {
         let url = format!("{}{}", DB_STATUS, id);
         let body = self.request(&url);
         serde_json::from_str(&body).unwrap()
     }
 
     fn request(&self, url: &str) -> String {
+        let url = format!("{}{}", self.config.url, url);
         let response = self.client
-            .get(url)
-            .header("X-API-Key", self.device.api_key)
+            .get(&url)
+            .header("X-API-Key", &self.config.api_key)
             .send().unwrap()
             .text().unwrap();
 

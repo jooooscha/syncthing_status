@@ -16,28 +16,15 @@ use std::{
 const CONFIG_DIR: &str = "syncthing_status";
 const CONFIG_FILE: &str = "devices.yml";
 
-#[derive(Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
 pub(crate) struct Config {
-    devices: Vec<Device>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            devices: vec![Device::default()],
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Eq, PartialEq)]
-pub(crate) struct Device {
     pub url: String,
     pub name: String,
     pub short_name: String,
     pub api_key: String,
 }
 
-impl Default for Device {
+impl Default for Config {
     fn default() -> Self {
         let url = "https://localhost:8384".to_string();
         let name = "Laptop".to_string();
@@ -54,56 +41,13 @@ impl Default for Device {
 }
 
 impl Config {
-    pub(crate) fn load() -> Self {
+    pub(crate) fn load() -> Vec<Self> {
         get_devices()
     }
 }
 
-/* pub fn get_devices() -> Vec<Device> {
- *     // create folder
- *     let folder = config_dir()
- *         .unwrap()
- *         .join("syncthing_status");
- *
- *     let _ = create_dir_all(&folder);
- *
- *     let path = folder.join("devices").with_extension("yml");
- *
- *     // open file
- *     let mut file = OpenOptions::new()
- *         .read(true)
- *         .write(true)
- *         .open(path);
- *
- *     match file {
- *         Ok(file) => {}
- *         Err(error) => {
- *             match error.kind() {
- *                 ErrorKind::NotFound => {
- *                     let mut file = OpenOptions::new()
- *                         .write(true)
- *                         .create(true)
- *                         .open(path)
- *                         .unwrap();
- *                 serde_yaml::to_string(&Device::default()).unwrap()
- *                 },
- *                 _ => {}
- *             }
- *         }
- *     }
- *
- *     let mut reader = String::new();
- *     file.read_to_string(&mut reader).unwrap();
- *     let devices: Vec<Device> = match serde_yaml::from_str(&reader) {
- *         Ok(d) => d,
- *         Err(e) => panic!("Could not parse device-file: {:?}", e),
- *     };
- *
- *     devices
- * } */
-
 /// Read in config dir
-pub(crate) fn get_devices() -> Config {
+pub(crate) fn get_devices() -> Vec<Config> {
 
     let file_path = get_config_dir().join(CONFIG_FILE);
 
@@ -119,7 +63,7 @@ pub(crate) fn get_devices() -> Config {
                 panic!("Data is no valid utf-8: {}", e);
             }
 
-            return serde_yaml::from_str(&buffer).unwrap_or_default();
+            return serde_yaml::from_str(&buffer).unwrap();
         }
         Err(error) => {
             match error.kind() {
@@ -127,7 +71,7 @@ pub(crate) fn get_devices() -> Config {
                     let devices = vec![Config::default()];
                     let string = serde_yaml::to_string(&devices).unwrap();
                     write_config(&string);
-                    return Config { devices };
+                    devices
                 },
                 other_error => {
                     panic!("Could not read file: {:?}", other_error);
