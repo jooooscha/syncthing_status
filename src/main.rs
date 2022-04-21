@@ -11,7 +11,7 @@ struct System {
 }
 
 impl System {
-    fn summary(&self, config: &Config) {
+    fn summary(&self) {
         let mut output = "👍";
         for folder in self.folder.iter() {
             if folder.state != "idle" {
@@ -60,7 +60,7 @@ fn main() {
 
     // OUTPUT
 
-    system.summary(config);
+    system.summary();
 
     // the output string
 /*     let mut file_output = String::new();
