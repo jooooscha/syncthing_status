@@ -33,7 +33,27 @@
           # packageOverrides = pkgs: pkgs.rustBuilder.overrides.all; # Implied, if not specified
         };
 
+        workspaceShell = rustPkgs.workspaceShell {
+          buildInputs = with pkgs; [
+            cargo-edit
+            cargo-expand
+            cargo-outdated
+            cargo-watch
+            rust-analyzer
+            lldb
+            xorg.libxcb
+
+            nixpkgs-fmt
+            openssl
+            pkgconfig
+            pkg-config
+          ];
+
       in rec {
+
+        devShell = workspaceShell;
+
+        defaultApp = packages.tyt;
 
         packages = {
           syncthing_status = (rustPkgs.workspace.syncthing_status {}).bin;
