@@ -48,12 +48,13 @@
             pkgconfig
             pkg-config
           ];
+        };
 
       in rec {
 
         devShell = workspaceShell;
 
-        defaultApp = packages.tyt;
+        defaultApp = packages.syncthing_status;
 
         packages = {
           syncthing_status = (rustPkgs.workspace.syncthing_status {}).bin;
