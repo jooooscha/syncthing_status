@@ -1,32 +1,38 @@
 use config::Config;
 use crate::api_handler::Rest;
 use api_handler::*;
+use std::collections::HashMap;
 
 mod api_handler;
 mod config;
 
 #[derive(Default)]
 struct System {
-    folder: Vec<Folder>,
+    folder: HashMap<String, Vec<Folder>>,
 }
 
 impl System {
     fn summary(&self) {
         let mut output = "👍";
-        for folder in self.folder.iter() {
-            if folder.state != "idle" {
-                output = "👎";
+        for (name, folder_list) in self.folder.iter() {
+            for folder in folder_list.iter() {
+                if folder.state != "idle" {
+                    output = "👎";
+                }
             }
+            print!("{}: {}", name, output);
         }
-
-        println!("{}", output);
+        println!();
     }
 }
 
 #[derive(Default)]
 struct Folder {
+    #[allow(dead_code)]
     id: FolderId,
+    #[allow(dead_code)]
     label: FolderLabel,
+    #[allow(dead_code)]
     paused: bool,
     state: State
 }
@@ -48,14 +54,19 @@ fn main() {
 
     let config = Config::load();
     for device in config.into_iter() {
+        let name = device.short_name.clone();
         let rest = Rest::new(device);
 
+        let mut folder_list = Vec::new();
         for folder in rest.system_config().folders.into_iter() {
             let db_state = rest.db_status(&folder.id);
 
             let local_folder = Folder::from(folder, db_state);
-            system.folder.push(local_folder);
+            folder_list.push(local_folder);
+
         }
+
+        system.folder.insert(name, folder_list);
     }
 
     // OUTPUT
