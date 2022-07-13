@@ -16,7 +16,10 @@ impl System {
 
         let mut string = String::new();
 
-        for (name, folder_list) in self.folder.iter() {
+        let mut hash_vec: Vec<(&String, &Vec<Folder>)> = self.folder.iter().collect();
+        hash_vec.sort_by(|a, b| a.0.cmp(b.0));
+
+        for (name, folder_list) in hash_vec.iter() {
             let mut states = Vec::new();
 
             for folder in folder_list.iter() {
