@@ -1,9 +1,9 @@
 use config::Config;
-use crate::api_handler::Rest;
-use api_handler::*;
+use crate::api::Api;
+use api::*;
 use std::collections::HashMap;
 
-mod api_handler;
+mod api;
 mod config;
 
 #[derive(Default)]
@@ -13,17 +13,18 @@ struct System {
 
 impl System {
     fn output(&self) {
-        let mut output = "👍";
 
         let mut string = String::new();
 
         for (name, folder_list) in self.folder.iter() {
+            let mut states = Vec::new();
+
             for folder in folder_list.iter() {
-                if folder.state != "idle" {
-                    output = "👎";
-                }
+                states.push(folder.state.clone());
             }
-            string += &format!("{}: {} ", name, output);
+            states.sort();
+
+            string += &format!("{}: {} ", name, states[0].to_emoji());
         }
 
         println!("{}", string.trim());
@@ -42,7 +43,7 @@ struct Folder {
 }
 
 impl Folder {
-    fn from(f: api_handler::Folder, state: DbStatus) -> Self {
+    fn from(f: api::Folder, state: DbStatus) -> Self {
         Self {
             id: f.id,
             label: f.label,
@@ -59,7 +60,7 @@ fn main() {
     let config = Config::load();
     for device in config.into_iter() {
         let name = device.short_name.clone();
-        let rest = Rest::new(device);
+        let rest = Api::new(device);
 
         let mut folder_list = Vec::new();
         let system_config = match rest.system_config() {

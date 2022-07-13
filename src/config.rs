@@ -16,7 +16,7 @@ const CONFIG_DIR: &str = "syncthing_status";
 const CONFIG_FILE: &str = "devices.yml";
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-pub(crate) struct Config {
+pub struct Config {
     pub url: String,
     pub name: String,
     pub short_name: String,
@@ -40,13 +40,13 @@ impl Default for Config {
 }
 
 impl Config {
-    pub(crate) fn load() -> Vec<Self> {
+    pub fn load() -> Vec<Self> {
         get_devices()
     }
 }
 
 /// Read in config dir
-pub(crate) fn get_devices() -> Vec<Config> {
+pub fn get_devices() -> Vec<Config> {
 
     let file_path = get_config_dir().join(CONFIG_FILE);
 

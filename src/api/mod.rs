@@ -1,39 +1,16 @@
-use reqwest::{blocking::Client};
-use serde::{Deserialize, Serialize};
+use reqwest::blocking::Client;
 use crate::config::Config;
 
-const SYSTEM_CONFIG: &str = "/rest/system/config";
-const DB_STATUS: &str = "/rest/db/status?folder=";
+pub use types::*;
+pub mod types;
 
-pub(crate) type FolderId = String;
-pub(crate) type FolderLabel = String;
-pub(crate) type State = String;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct SystemConfig {
-    pub(crate) folders: Vec<Folder>
+pub struct Api {
+    pub client: Client,
+    pub config: Config,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct Folder {
-    pub(crate) id: FolderId,
-    pub(crate) label: FolderLabel,
-    pub(crate) paused: bool,
-}
-
-#[derive(Serialize, Deserialize)]
-pub(crate) struct DbStatus {
-    pub(crate) state: State,
-}
-
-
-pub(crate) struct Rest {
-    pub(crate) client: Client,
-    pub(crate) config: Config,
-}
-
-impl Rest {
-    pub(crate) fn new(config: Config) -> Self {
+impl Api {
+    pub fn new(config: Config) -> Self {
         let client = Client::builder()
             .danger_accept_invalid_certs(true)
             .connect_timeout(std::time::Duration::from_millis(800))
@@ -44,12 +21,12 @@ impl Rest {
             config,
         }
     }
-    pub(crate) fn system_config(&self) -> Result<SystemConfig, reqwest::Error> {
+    pub fn system_config(&self) -> Result<SystemConfig, reqwest::Error> {
         let body = self.request(SYSTEM_CONFIG)?;
         Ok(serde_json::from_str(&body).unwrap())
     }
 
-    pub(crate) fn db_status(&self, id: &FolderId) -> Result<DbStatus, reqwest::Error> {
+    pub fn db_status(&self, id: &FolderId) -> Result<DbStatus, reqwest::Error> {
         let url = format!("{}{}", DB_STATUS, id);
         let body = self.request(&url)?;
         Ok(serde_json::from_str(&body).unwrap())
@@ -70,25 +47,25 @@ impl Rest {
 //////////////////////
 
 /* #[derive(Serialize, Deserialize)]
- * struct(crate) FolderId {
+ * struct FolderId {
  *     id: String,
  *     label: String,
  * }
  *
  * #[derive(Serialize, Deserialize)]
- * struct(crate) FolderState {
+ * struct FolderState {
  *     state: String,
  *     errors: u32,
  * }
  *
  * #[derive(Serialize, Deserialize)]
- * pub(crate) struct Folder {
+ * pub struct Folder {
  *     id: FolderId,
  *     state: FolderState,
  * }
  *
  * impl Folder {
- *     pub(crate) fn load(config: &Config) -> Vec<Self> {
+ *     pub fn load(config: &Config) -> Vec<Self> {
  *         let url = format!("{}{}", config.url, CONFIG_PATH);
  *         let body = request(&url, &config.api_key);
  *         let folders: Vec<FolderId> = serde_json::from_str::<Vec<FolderId>>(&body).unwrap();
@@ -105,16 +82,16 @@ impl Rest {
  *         ret
  *     }
  *
- *     pub(crate) fn id(&self) -> String {
+ *     pub fn id(&self) -> String {
  *         self.id.id
  *     }
- *     pub(crate) fn label(&self) -> String {
+ *     pub fn label(&self) -> String {
  *         self.id.label
  *     }
- *     pub(crate) fn state(&self) -> String {
+ *     pub fn state(&self) -> String {
  *         self.state.state
  *     }
- *     pub(crate) fn errors(&self) -> u32 {
+ *     pub fn errors(&self) -> u32 {
  *         self.state.errors
  *     }
  * }
@@ -134,12 +111,12 @@ impl Rest {
  * } */
 
 /* #[derive(Serialize, Deserialize)]
- * pub(crate) struct DirList {
- *     pub(crate) dirs: Vec<FolderId>,
+ * pub struct DirList {
+ *     pub dirs: Vec<FolderId>,
  * } */
 
 /* impl DirList {
- *     pub(crate) fn fetch(config: &Config) -> Result<Self, Error> {
+ *     pub fn fetch(config: &Config) -> Result<Self, Error> {
  *         let url = format!("{}{}", config.url, CONFIG_PATH);
  *         let body = request(&url, &config.api_key).unwrap();
  *         serde_json::from_str::<Self>(&body)
