@@ -1,4 +1,4 @@
-use reqwest::blocking::Client;
+use reqwest::{blocking::Client};
 use serde::{Deserialize, Serialize};
 use crate::config::Config;
 
@@ -43,26 +43,26 @@ impl Rest {
             config,
         }
     }
-    pub(crate) fn system_config(&self) -> SystemConfig {
-        let body = self.request(SYSTEM_CONFIG);
-        serde_json::from_str(&body).unwrap()
+    pub(crate) fn system_config(&self) -> Result<SystemConfig, reqwest::Error> {
+        let body = self.request(SYSTEM_CONFIG)?;
+        Ok(serde_json::from_str(&body).unwrap())
     }
 
-    pub(crate) fn db_status(&self, id: &FolderId) -> DbStatus {
+    pub(crate) fn db_status(&self, id: &FolderId) -> Result<DbStatus, reqwest::Error> {
         let url = format!("{}{}", DB_STATUS, id);
-        let body = self.request(&url);
-        serde_json::from_str(&body).unwrap()
+        let body = self.request(&url)?;
+        Ok(serde_json::from_str(&body).unwrap())
     }
 
-    fn request(&self, url: &str) -> String {
+    fn request(&self, url: &str) -> Result<String, reqwest::Error> {
         let url = format!("{}{}", self.config.url, url);
         let response = self.client
             .get(&url)
             .header("X-API-Key", &self.config.api_key)
-            .send().unwrap()
-            .text().unwrap();
+            .send()?
+            .text()?;
 
-        response
+        Ok(response)
     }
 }
 

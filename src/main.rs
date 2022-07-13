@@ -12,7 +12,7 @@ struct System {
 }
 
 impl System {
-    fn summary(&self) {
+    fn output(&self) {
         let mut output = "👍";
         for (name, folder_list) in self.folder.iter() {
             for folder in folder_list.iter() {
@@ -20,7 +20,7 @@ impl System {
                     output = "👎";
                 }
             }
-            print!("{}: {}", name, output);
+            print!("{}: {} ", name, output);
         }
         println!();
     }
@@ -58,8 +58,15 @@ fn main() {
         let rest = Rest::new(device);
 
         let mut folder_list = Vec::new();
-        for folder in rest.system_config().folders.into_iter() {
-            let db_state = rest.db_status(&folder.id);
+        let system_config = match rest.system_config() {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+        for folder in system_config.folders.into_iter() {
+            let db_state = match rest.db_status(&folder.id) {
+                Ok(dbs) => dbs,
+                Err(_) => continue,
+            };
 
             let local_folder = Folder::from(folder, db_state);
             folder_list.push(local_folder);
@@ -71,7 +78,7 @@ fn main() {
 
     // OUTPUT
 
-    system.summary();
+    system.output();
 
     // the output string
 /*     let mut file_output = String::new();
