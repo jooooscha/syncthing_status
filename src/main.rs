@@ -14,15 +14,19 @@ struct System {
 impl System {
     fn output(&self) {
         let mut output = "👍";
+
+        let mut string = String::new();
+
         for (name, folder_list) in self.folder.iter() {
             for folder in folder_list.iter() {
                 if folder.state != "idle" {
                     output = "👎";
                 }
             }
-            print!("{}: {} ", name, output);
+            string += &format!("{}: {} ", name, output);
         }
-        println!();
+
+        println!("{}", string.trim());
     }
 }
 
