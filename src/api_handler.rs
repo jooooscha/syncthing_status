@@ -36,6 +36,7 @@ impl Rest {
     pub(crate) fn new(config: Config) -> Self {
         let client = Client::builder()
             .danger_accept_invalid_certs(true)
+            .connect_timeout(std::time::Duration::from_millis(200))
             .build().unwrap();
 
         Self {
