@@ -13,7 +13,7 @@ impl Api {
     pub fn new(config: Config) -> Self {
         let client = Client::builder()
             .danger_accept_invalid_certs(true)
-            .connect_timeout(std::time::Duration::from_millis(800))
+            .connect_timeout(std::time::Duration::from_millis(5000))
             .build().unwrap();
 
         Self {
