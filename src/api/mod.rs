@@ -1,4 +1,4 @@
-use reqwest::blocking::Client;
+use reqwest::{Client, Response};
 use crate::config::Config;
 
 pub use types::*;
@@ -21,26 +21,20 @@ impl Api {
             config,
         }
     }
-    pub fn system_config(&self) -> Result<SystemConfig, reqwest::Error> {
-        let body = self.request(SYSTEM_CONFIG)?;
-        Ok(serde_json::from_str(&body).unwrap())
+    pub async fn system_config(&self) -> Result<SystemConfig, reqwest::Error> {
+        self.request(SYSTEM_CONFIG).await?.json().await
     }
 
-    pub fn db_status(&self, id: &FolderId) -> Result<DbStatus, reqwest::Error> {
+    pub async fn db_status(&self, id: &FolderId) -> Result<DbStatus, reqwest::Error> {
         let url = format!("{}{}", DB_STATUS, id);
-        let body = self.request(&url)?;
-        Ok(serde_json::from_str(&body).unwrap())
+        self.request(&url).await?.json().await
     }
 
-    fn request(&self, url: &str) -> Result<String, reqwest::Error> {
+    async fn request(&self, url: &str) -> Result<Response, reqwest::Error> {
         let url = format!("{}{}", self.config.url, url);
-        let response = self.client
-            .get(&url)
+        self.client.get(&url)
             .header("X-API-Key", &self.config.api_key)
-            .send()?
-            .text()?;
-
-        Ok(response)
+            .send().await
     }
 }
 

@@ -62,7 +62,7 @@ pub fn get_devices() -> Vec<Config> {
                 panic!("Data is no valid utf-8: {}", e);
             }
 
-            return serde_yaml::from_str(&buffer).unwrap();
+            serde_yaml::from_str(&buffer).unwrap()
         }
         Err(error) => {
             match error.kind() {

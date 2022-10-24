@@ -5,5 +5,6 @@
       ssl = true;
       name = "syncthing_status";
       root = ./.;
+      gdb = true;
     };
 }

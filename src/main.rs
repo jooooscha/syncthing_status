@@ -2,6 +2,7 @@ use config::Config;
 use crate::api::Api;
 use api::*;
 use std::collections::HashMap;
+use futures::future::join_all;
 
 mod api;
 mod config;
@@ -23,18 +24,18 @@ impl System {
             let mut states = Vec::new();
 
             for folder in folder_list.iter() {
-                states.push(folder.state.clone());
+                states.push(folder.state);
             }
             states.sort();
 
-            string += &format!("{}: {} ", name, states[0].to_emoji());
+            string += &format!("{}: {} ", name, states[0].as_emoji());
         }
 
         println!("{}", string.trim());
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct Folder {
     #[allow(dead_code)]
     id: FolderId,
@@ -56,32 +57,43 @@ impl Folder {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
 
     let mut system = System::default();
 
+    let mut futures = Vec::new();
+
     let config = Config::load();
     for device in config.into_iter() {
-        let name = device.short_name.clone();
-        let rest = Api::new(device);
+        let f = async {
+            let name = device.short_name.clone();
+            let rest = Api::new(device);
 
-        let mut folder_list = Vec::new();
-        let system_config = match rest.system_config() {
-            Ok(c) => c,
-            Err(_) => continue,
-        };
-        for folder in system_config.folders.into_iter() {
-            let db_state = match rest.db_status(&folder.id) {
-                Ok(dbs) => dbs,
-                Err(_) => continue,
+            let mut folder_list = Vec::new();
+            let system_config = match rest.system_config().await {
+                Ok(c) => c,
+                Err(e) => return Err(e),
             };
+            for folder in system_config.folders.into_iter() {
+                let db_state = match rest.db_status(&folder.id).await {
+                    Ok(dbs) => dbs,
+                    Err(e) => return Err(e),
+                };
 
-            let local_folder = Folder::from(folder, db_state);
-            folder_list.push(local_folder);
+                let local_folder = Folder::from(folder, db_state);
+                folder_list.push(local_folder);
+            }
 
+            Ok((name, folder_list))
+        };
+        futures.push(f);
+    }
+
+    for result in join_all(futures).await {
+        if let Ok((name, folder_list)) = result {
+            let _ = system.folder.insert(name, folder_list);
         }
-
-        system.folder.insert(name, folder_list);
     }
 
     // OUTPUT

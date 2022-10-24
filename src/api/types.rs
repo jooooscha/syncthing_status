@@ -28,7 +28,7 @@ impl Default for State {
 }
 
 impl State {
-    pub fn to_emoji(&self) -> &str {
+    pub fn as_emoji(&self) -> &str {
         match self {
             Self::Error => "❌",
             Self::Unknown => "🤷",
