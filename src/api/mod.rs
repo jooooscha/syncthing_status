@@ -25,7 +25,7 @@ impl Api {
         self.request(SYSTEM_CONFIG).await?.json().await
     }
 
-    pub async fn db_status(&self, id: &FolderId) -> Result<DbStatus, reqwest::Error> {
+    pub async fn db_status(&self, id: &FolderId) -> Result<DbState, reqwest::Error> {
         let url = format!("{}{}", DB_STATUS, id);
         self.request(&url).await?.json().await
     }

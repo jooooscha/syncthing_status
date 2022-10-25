@@ -56,6 +56,6 @@ pub struct Folder {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct DbStatus {
+pub struct DbState {
     pub state: State,
 }

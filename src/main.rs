@@ -2,7 +2,8 @@ use config::Config;
 use crate::api::Api;
 use api::*;
 use std::collections::HashMap;
-use futures::future::join_all;
+use futures::future::{join_all, try_join_all};
+use rayon::prelude::*;
 
 mod api;
 mod config;
@@ -47,7 +48,7 @@ struct Folder {
 }
 
 impl Folder {
-    fn from(f: api::Folder, state: DbStatus) -> Self {
+    fn from(f: api::Folder, state: DbState) -> Self {
         Self {
             id: f.id,
             label: f.label,
@@ -62,39 +63,41 @@ async fn main() {
 
     let mut system = System::default();
 
-    let mut futures = Vec::new();
-
     let config = Config::load();
-    for device in config.into_iter() {
-        let f = async {
-            let name = device.short_name.clone();
-            let rest = Api::new(device);
+    let info = config.into_iter().map(|device| async {
+        let name = device.short_name.clone();
+        let rest = Api::new(device);
 
-            let mut folder_list = Vec::new();
-            let system_config = match rest.system_config().await {
-                Ok(c) => c,
-                Err(e) => return Err(e),
-            };
-            for folder in system_config.folders.into_iter() {
-                let db_state = match rest.db_status(&folder.id).await {
-                    Ok(dbs) => dbs,
-                    Err(e) => return Err(e),
-                };
-
-                let local_folder = Folder::from(folder, db_state);
-                folder_list.push(local_folder);
-            }
-
-            Ok((name, folder_list))
+        // fetch config for that device
+        let system_config = match rest.system_config().await {
+            Ok(c) => c,
+            Err(e) => return Err(e),
         };
-        futures.push(f);
-    }
 
-    for result in join_all(futures).await {
+        // collect futures
+        let folders_future = system_config.folders.iter()
+            .map(|folder| rest.db_status(&folder.id) );
+
+        // run futures and collect results. When one future return Err, the function returns Err
+        let db_state_list: Vec<DbState> = match try_join_all(folders_future).await {
+            Ok(dbs_list) => dbs_list,
+            Err(e) => return Err(e),
+        };
+
+        // combine fetched data (DbStatus) and crete `Folder` structure
+        let folder_list: Vec<Folder> = system_config.folders.into_par_iter().zip(db_state_list.into_par_iter())
+            .map(|(folder, db_state)| Folder::from(folder, db_state))
+            .collect();
+
+        Ok((name, folder_list))
+    });
+
+    join_all(info).await.into_iter().for_each(|result| {
         if let Ok((name, folder_list)) = result {
-            let _ = system.folder.insert(name, folder_list);
+            system.folder.insert(name, folder_list);
         }
-    }
+    });
+
 
     // OUTPUT
 
