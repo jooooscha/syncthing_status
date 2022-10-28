@@ -1,7 +1,8 @@
 # Status information about local or remote Syncthing instances
 
-- Place your config in `~/.config/syncthing_status/devices.yml`
+- Place your config in `~/.config/syncthing_status/devices.yaml`
 - Your can retrieve your `api_key` from the web panel of your Syncthing instance
+- This is designed to be used in your status bar (Polybar, etc.)
 
 #### Example config
 
