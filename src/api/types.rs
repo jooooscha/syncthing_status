@@ -30,15 +30,15 @@ impl Default for State {
 impl State {
     pub fn as_emoji(&self) -> &str {
         match self {
-            Self::Error => "❌",
-            Self::Unknown => "🤷",
-            Self::Syncing => "💾",
-            Self::Scanning => "💿",
+            Self::Error => "",
+            Self::Unknown => "",
+            Self::Syncing => "󰓦",
+            Self::Scanning => "󱉶",
             Self::ScanWaiting
                 | Self::SyncWaiting
-                | Self::SyncPreparing => "🕛",
-            Self::Idle => "👍",
-            Self::Paused => "⏸️",
+                | Self::SyncPreparing => "󰲽",
+            Self::Idle => "",
+            Self::Paused => "",
         }
     }
 }
